@@ -266,21 +266,24 @@ status_t OMXNodeInstance::freeNode(OMXMaster *master) {
             break;
     }
 
-    Mutex::Autolock _l(mLock);
+    OMX_ERRORTYPE err = OMX_ErrorNone;
+    {
+      Mutex::Autolock _l(mLock);
 
-    ALOGV("calling destroyComponentInstance");
-    OMX_ERRORTYPE err = master->destroyComponentInstance(
-            static_cast<OMX_COMPONENTTYPE *>(mHandle));
-    ALOGV("destroyComponentInstance returned err %d", err);
+      ALOGV("calling destroyComponentInstance");
+      err = master->destroyComponentInstance(
+              static_cast<OMX_COMPONENTTYPE *>(mHandle));
+      ALOGV("destroyComponentInstance returned err %d", err);
 
-    mHandle = NULL;
+      mHandle = NULL;
 
-    if (err != OMX_ErrorNone) {
-        ALOGE("FreeHandle FAILED with error 0x%08x.", err);
+      if (err != OMX_ErrorNone) {
+          ALOGE("FreeHandle FAILED with error 0x%08x.", err);
+      }
+
+      mOwner->invalidateNodeID(mNodeID);
+      mNodeID = NULL;
     }
-
-    mOwner->invalidateNodeID(mNodeID);
-    mNodeID = NULL;
 
     ALOGV("OMXNodeInstance going away.");
     delete this;
